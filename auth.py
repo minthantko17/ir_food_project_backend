@@ -74,7 +74,7 @@ def register():
         conn.commit()
 
         # get new user id
-        user = conn.fetchone('SELECT * FROM users WHERE username = ?', (username,))
+        user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
         token = create_token(user['id'], username)
 
         return jsonify({
