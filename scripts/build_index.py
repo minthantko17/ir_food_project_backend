@@ -166,14 +166,30 @@ def build_lda(df_clean):
 
 if __name__ == "__main__":
     print("Preprocess and build index..")
-    df = load_data()
-    df_clean = prepare_recipes(df)
+    print("\njust manual delete existing file to create new one, if already exists and wants to run again. Dx")
 
-    print("\nSaving recipes_clean.parquet...")
-    df_clean.to_parquet(config.RECIPES_CLEAN_PATH, index=False)
-    print("    Saved!")
+    #cleaning
+    if config.RECIPES_CLEAN_PATH.exists():
+        print("\nrecipes_clean.parquet already exists. skip :3")
+        df_clean = pd.read_parquet(config.RECIPES_CLEAN_PATH)
+        print(f"Loaded {len(df_clean)} recipes")
+    else:
+        df = load_data()
+        df_clean = prepare_recipes(df)
+        print("\n Saving recipes_clean.parquet...")
+        df_clean.to_parquet(config.RECIPES_CLEAN_PATH, index=False)
+        print("Saved!")
 
-    bm25 = build_bm25(df_clean)
-    build_lda(df_clean)
+    # creat bm25 index
+    if config.BM25_INDEX_PATH.exists():
+        print("\nbm25_index.pkl already exists. skip :v")
+    else:
+        build_bm25(df_clean)
+
+    # build lda
+    if config.LDA_MODEL_PATH.exists():
+        print("\nlda_model.pkl already exists. skip :P")
+    else:
+        build_lda(df_clean)
 
     print("\nFinished xD")
