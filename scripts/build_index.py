@@ -1,6 +1,7 @@
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from search_engine import BM25, identity
 
 import pandas as pd
 import numpy as np
@@ -95,29 +96,6 @@ def prepare_recipes(df):
     return df_clean
 
 
-
-class BM25(object):
-    def __init__(self, vectorizer, b=config.BM25_B, k1=config.BM25_K1):
-        self.vectorizer = vectorizer
-        self.b = b
-        self.k1 = k1
-
-    def fit(self, X):
-        self.vectorizer.fit(X)
-        self.y = super(TfidfVectorizer, self.vectorizer).transform(X)
-        self.avdl = self.y.sum(1).mean()
-
-    def transform(self, q):
-        b, k1, avdl = self.b, self.k1, self.avdl
-        len_y = self.y.sum(1).A1
-        q, = super(TfidfVectorizer, self.vectorizer).transform([q])
-        assert sparse.isspmatrix_csr(q)
-        y = self.y.tocsc()[:, q.indices]
-        denom = y + (k1 * (1 - b + b * len_y / avdl))[:, None]
-        idf = self.vectorizer._tfidf.idf_[None, q.indices] - 1.
-        numer = y.multiply(np.broadcast_to(idf, y.shape)) * (k1 + 1)
-        return (numer / denom).sum(1).A1
-
 def build_bm25(df_clean):
     print("\n[Building BM25 index...")
     tfidf_vectorizer = TfidfVectorizer(
@@ -131,14 +109,6 @@ def build_bm25(df_clean):
         pickle.dump(bm25, f)
     print("    Done!")
     return bm25
-
-# got this error without this...and fixed by claude :")
-#  File "/Users/minthantko/Documents/cmu/cmu3_2/ir/food_bookmarking_recommendation_project/se481-backend/scripts/build_index.py", line 130, in build_bm25
-#     pickle.dump(bm25, f)
-# AttributeError: Can't pickle local object 'build_bm25.<locals>.<lambda>'
-def identity(x):
-    return x
-
 
 
 def build_lda(df_clean):
