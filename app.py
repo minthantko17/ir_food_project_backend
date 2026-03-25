@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
 import config
+from database import init_db
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = config.SECRET_KEY
@@ -8,6 +9,9 @@ app.config['DEBUG'] = config.DEBUG
 
 # Allow React frontend to call this API
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})
+
+with app.app_context():
+    init_db()
 
 # --- Health check route (just to test server is running) ---
 @app.route('/api/health', methods=['GET'])
