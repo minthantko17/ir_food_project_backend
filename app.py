@@ -111,10 +111,6 @@ def bookmarks_all():
 def folder_bookmarks(folder_id):
     return get_folder_bookmarks(request.user_id, folder_id)
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=config.DEBUG)
-
-
 # recomendations
 @app.route('/api/landing', methods=['GET'])
 @login_required
@@ -136,3 +132,8 @@ def categories():
 def folder_suggestions(folder_id):
     result = get_folder_suggestions(request.user_id, folder_id)
     return jsonify(result)
+
+
+# MAIN HERE ✋😞
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=config.DEBUG)
