@@ -110,6 +110,25 @@ def get_recommended_for_you(user_id, n=10):
 
     return [recipe_to_dict(r) for _, r in top_recipes.iterrows()]
 
+# get recommendation from category
+def get_from_category(category=None, n=10):
+    df = search_engine.df_recipes
+    if df is None:
+        return []
+    
+    if category:
+        filtered = df[df['RecipeCategory'] == category]
+    else:
+        top_category = df['RecipeCategory'].value_counts().index[0]
+        filtered = df[df['RecipeCategory'] == top_category]
+
+    top = filtered[filtered['AggregatedRating'] > 0]\
+            .sort_values('AggregatedRating', ascending=False)\
+            .head(n)
+
+    return [recipe_to_dict(r) for _, r in top.iterrows()]
+
+
 # get random
 def get_random_recipes(n=10):
     df = search_engine.df_recipes
@@ -118,3 +137,10 @@ def get_random_recipes(n=10):
 
     random_recipes = df.sample(n=n)
     return [recipe_to_dict(r) for _, r in random_recipes.iterrows()]
+
+
+def get_all_categories():
+    df = search_engine.df_recipes
+    if df is None:
+        return []
+    return sorted(df['RecipeCategory'].dropna().unique().tolist())
