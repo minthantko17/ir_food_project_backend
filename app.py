@@ -4,6 +4,14 @@ import config
 from database import init_db
 from auth import register, login, login_required
 from search_engine import load_search_engine, search as bm25_search
+from folders import (
+    get_folders, create_folder,
+    rename_folder, delete_folder
+)
+from bookmarks import (
+    add_bookmark, remove_bookmark,
+    get_all_bookmarks, get_folder_bookmarks
+)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = config.SECRET_KEY
@@ -42,10 +50,55 @@ def search_route():
     results = bm25_search(query)
 
     return jsonify({
-        'query'  : query,
-        'count'  : len(results),
-        'results': results
+        'original'      : query,
+        'corrected'     : query,
+        'has_correction': False,
+        'corrections'   : {},
+        'count'         : len(results),
+        'results'       : results
     })
+
+# folders
+@app.route('/api/folders', methods=['GET'])
+@login_required
+def folders_get():
+    return get_folders(request.user_id)
+
+@app.route('/api/folders', methods=['POST'])
+@login_required
+def folders_create():
+    return create_folder(request.user_id)
+
+@app.route('/api/folders/<int:folder_id>', methods=['PUT'])
+@login_required
+def folders_rename(folder_id):
+    return rename_folder(request.user_id, folder_id)
+
+@app.route('/api/folders/<int:folder_id>', methods=['DELETE'])
+@login_required
+def folders_delete(folder_id):
+    return delete_folder(request.user_id, folder_id)
+
+# bookmarks
+@app.route('/api/bookmarks', methods=['POST'])
+@login_required
+def bookmarks_add():
+    return add_bookmark(request.user_id)
+
+@app.route('/api/bookmarks/<int:bookmark_id>', methods=['DELETE'])
+@login_required
+def bookmarks_remove(bookmark_id):
+    return remove_bookmark(request.user_id, bookmark_id)
+
+@app.route('/api/bookmarks', methods=['GET'])
+@login_required
+def bookmarks_all():
+    return get_all_bookmarks(request.user_id)
+
+@app.route('/api/folders/<int:folder_id>/bookmarks', methods=['GET'])
+@login_required
+def folder_bookmarks(folder_id):
+    return get_folder_bookmarks(request.user_id, folder_id)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=config.DEBUG)
