@@ -18,6 +18,7 @@ resource/recipes.parquet
 resource/reviews.parquet
 resource/bm25_index.pkl
 resource/lda_model.pkl
+resource/recipes_clean.parquet
 
 # Images downloaded at runtime
 resource/images/
