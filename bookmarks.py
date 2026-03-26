@@ -1,14 +1,17 @@
 from flask import request, jsonify
 from database import get_db
-from search_engine import df_recipes
+import search_engine
 
 
 def get_recipe_details(recipe_id):
-    if df_recipes is None:
+    if search_engine.df_recipes is None:
+        print("df_recipes is None!")
         return None
-    recipe = df_recipes[df_recipes['RecipeId'] == recipe_id]
+    
+    recipe = search_engine.df_recipes[search_engine.df_recipes['RecipeId'] == float(recipe_id)]
     if recipe.empty:
         return None
+    
     recipe = recipe.iloc[0]
     return {
         'recipe_id': int(recipe['RecipeId']),
