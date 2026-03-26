@@ -211,8 +211,8 @@ def get_folder_suggestions(user_id, folder_id, n=10):
         results.append(r)
 
     return {
-        'suggestions'       : results,
-        'method'            : 'LDA topic similarity',
-        'baseline_category' : baseline_category,
-        'folder_profile'    : folder_profile.tolist()
+        'suggestions': results,
+        'method': 'LDA topic similarity',
+        'baseline_category': baseline_category,
+        'folder_profile': folder_profile.tolist()
     }

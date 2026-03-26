@@ -12,6 +12,14 @@ from bookmarks import (
     add_bookmark, remove_bookmark,
     get_all_bookmarks, get_folder_bookmarks
 )
+from recommendations import (
+    load_recommender,
+    get_recommended_for_you,
+    get_from_category,
+    get_random_recipes,
+    get_all_categories,
+    get_folder_suggestions
+)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = config.SECRET_KEY
@@ -23,6 +31,7 @@ CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})
 with app.app_context():
     init_db()
     load_search_engine()
+    load_recommender()
 
 # healthcheck
 @app.route('/api/health', methods=['GET'])
@@ -58,6 +67,7 @@ def search_route():
         'results'       : results
     })
 
+
 # folders
 @app.route('/api/folders', methods=['GET'])
 @login_required
@@ -78,6 +88,7 @@ def folders_rename(folder_id):
 @login_required
 def folders_delete(folder_id):
     return delete_folder(request.user_id, folder_id)
+
 
 # bookmarks
 @app.route('/api/bookmarks', methods=['POST'])
@@ -102,3 +113,26 @@ def folder_bookmarks(folder_id):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=config.DEBUG)
+
+
+# recomendations
+@app.route('/api/landing', methods=['GET'])
+@login_required
+def landing():
+    category = request.args.get('category', None)
+    return jsonify({
+        'recommended_for_you': get_recommended_for_you(request.user_id),
+        'from_category': get_from_category(category),
+        'random': get_random_recipes(),
+    })
+
+@app.route('/api/categories', methods=['GET'])
+@login_required
+def categories():
+    return jsonify({'categories': get_all_categories()})
+
+@app.route('/api/folders/<int:folder_id>/suggestions', methods=['GET'])
+@login_required
+def folder_suggestions(folder_id):
+    result = get_folder_suggestions(request.user_id, folder_id)
+    return jsonify(result)
