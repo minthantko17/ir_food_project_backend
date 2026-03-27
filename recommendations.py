@@ -105,7 +105,7 @@ def get_recommended_for_you(user_id, n=10):
     # leave bookmarked recipes for recommendation,
     candidates = df[~df['RecipeId'].isin(
         [float(i) for i in bookmarked_ids]
-    )].copy()
+    )].sample(n=10000).copy()
 
     candidate_vectors = lda_vectorizer.transform(
         candidates['search_text_clean'].fillna('')
@@ -185,7 +185,7 @@ def get_folder_suggestions(user_id, folder_id, n=10):
     # exclude existing bookmarks
     candidates = df[~df['RecipeId'].isin(
         [float(i) for i in folder_recipe_ids]
-    )].copy()
+    )].sample(n=10000).copy()
 
     # compute cosine similarility
     candidate_vectors = lda_vectorizer.transform(
