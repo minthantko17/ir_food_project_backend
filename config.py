@@ -30,7 +30,7 @@ BM25_K1 = 1.6       # term frequency saturation
 BM25_B = 0.75      # document length normalization
 
 # --- LDA ---
-LDA_TOPICS = 20        # number of topics for recommendations
+LDA_TOPICS = 50        # number of topics for recommendations
 
 # --- Image ---
 IMAGE_DOWNLOAD_TIMEOUT = 5     # seconds before giving up on image download
