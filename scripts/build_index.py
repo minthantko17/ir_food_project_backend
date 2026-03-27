@@ -166,7 +166,6 @@ def build_vocab(df_clean):
     print("Building raw vocabulary...")
     raw_texts = df_raw['raw_text'].apply(clean_only).tolist()
 
-    # count word frequencies
     vectorizer = CountVectorizer(
         ngram_range=(1, 1),
         min_df=3
@@ -216,5 +215,11 @@ if __name__ == "__main__":
         print("\nlda_model.pkl already exists. skip :P")
     else:
         build_lda(df_clean)
+
+    # build vocab for spell check from query
+    if config.VOCAB_PATH.exists():
+        print("\nvocab.pkl already exists. skip xD")
+    else:
+        build_vocab(df_clean)
 
     print("\nFinished xD")

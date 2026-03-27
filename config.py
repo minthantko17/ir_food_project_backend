@@ -14,6 +14,7 @@ RECIPES_CLEAN_PATH = RESOURCE_DIR / 'recipes_clean.parquet'
 BM25_INDEX_PATH = RESOURCE_DIR / 'bm25_index.pkl'
 LDA_MODEL_PATH = RESOURCE_DIR / 'lda_model.pkl'
 DATABASE_PATH = RESOURCE_DIR / 'app.db'
+VOCAB_PATH = RESOURCE_DIR / 'vocab.pkl'
 
 # --- Flask ---
 SECRET_KEY = 'dev-secret-key-change-later'
