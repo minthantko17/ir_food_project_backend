@@ -7,8 +7,9 @@ def get_recipe_details(recipe_id):
     if search_engine.df_recipes is None:
         print("df_recipes is None!")
         return None
-    
-    recipe = search_engine.df_recipes[search_engine.df_recipes['RecipeId'] == float(recipe_id)]
+    recipe = search_engine.df_recipes[
+        search_engine.df_recipes['RecipeId'] == float(recipe_id)
+    ]
     if recipe.empty:
         return None
     
@@ -18,7 +19,7 @@ def get_recipe_details(recipe_id):
         'name': recipe['Name'],
         'description': recipe['Description'],
         'category': recipe['RecipeCategory'],
-        'rating': float(recipe['AggregatedRating']),
+        'avg_rating': float(recipe['AggregatedRating']),
         'review_count': int(recipe['ReviewCount']),
         'image_url': recipe['image_url'],
         'ingredients': recipe['ingredients_str'],
@@ -83,18 +84,35 @@ def remove_bookmark(user_id, bookmark_id):
     finally:
         conn.close()
 
+def remove_bookmark_by_recipe(user_id, recipe_id):
+    """Remove a recipe from ALL folders"""
+    conn = get_db()
+    try:
+        conn.execute(
+            'DELETE FROM bookmarks WHERE user_id = ? AND recipe_id = ?',
+            (user_id, recipe_id)
+        )
+        conn.commit()
+        return jsonify({'message': 'Bookmark removed from all folders!'})
+    finally:
+        conn.close()
+
 
 # all bookmarks in one place :")
 def get_all_bookmarks(user_id):
     conn = get_db()
     try:
         bookmarks = conn.execute(
-            '''SELECT b.id, b.recipe_id, b.rating, b.created_at,
-                      f.name as folder_name, f.id as folder_id
+            '''SELECT b.recipe_id,
+                      AVG(b.rating) as user_avg_rating,
+                      GROUP_CONCAT(f.name, ', ') as folder_names,
+                      GROUP_CONCAT(f.id, ',') as folder_ids,
+                      MIN(b.created_at) as created_at
                FROM bookmarks b
                JOIN folders f ON b.folder_id = f.id
                WHERE b.user_id = ?
-               ORDER BY b.rating DESC, b.created_at DESC''',
+               GROUP BY b.recipe_id
+               ORDER BY user_avg_rating DESC''',
             (user_id,)
         ).fetchall()
 

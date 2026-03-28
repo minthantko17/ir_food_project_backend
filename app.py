@@ -10,7 +10,7 @@ from folders import (
     rename_folder, delete_folder
 )
 from bookmarks import (
-    add_bookmark, remove_bookmark,
+    add_bookmark, remove_bookmark, remove_bookmark_by_recipe,
     get_all_bookmarks, get_folder_bookmarks
 )
 from recommendations import (
@@ -117,6 +117,11 @@ def bookmarks_all():
 @login_required
 def folder_bookmarks(folder_id):
     return get_folder_bookmarks(request.user_id, folder_id)
+
+@app.route('/api/bookmarks/recipe/<int:recipe_id>', methods=['DELETE'])
+@login_required
+def bookmarks_remove_recipe(recipe_id):
+    return remove_bookmark_by_recipe(request.user_id, recipe_id)
 
 # recomendations
 @app.route('/api/landing', methods=['GET'])
