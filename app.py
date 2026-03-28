@@ -4,6 +4,7 @@ import config
 from database import init_db
 from auth import register, login, login_required
 from search_engine import load_search_engine, search as bm25_search
+from spell_check import load_spell_checker, correct_query
 from folders import (
     get_folders, create_folder,
     rename_folder, delete_folder
@@ -27,11 +28,14 @@ app.config['DEBUG'] = config.DEBUG
 
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})
 
+
+
 # initialize database and search engine on startup
 with app.app_context():
     init_db()
     load_search_engine()
     load_recommender()
+    load_spell_checker()
 
 # healthcheck
 @app.route('/api/health', methods=['GET'])
@@ -52,19 +56,22 @@ def login_route():
 @login_required
 def search_route():
     query = request.args.get('q', '').strip()
-
     if not query:
         return jsonify({'error': 'Query is required'}), 400
 
-    results = bm25_search(query)
+    # spellcheck raw query
+    spell_result = correct_query(query)
+
+    # search with stemmed corrected query
+    results = bm25_search(spell_result['search_query'])
 
     return jsonify({
-        'original'      : query,
-        'corrected'     : query,
-        'has_correction': False,
-        'corrections'   : {},
-        'count'         : len(results),
-        'results'       : results
+        'original': spell_result['original'],
+        'corrected': spell_result['corrected'],
+        'has_correction': spell_result['has_correction'],
+        'corrections': spell_result['corrections'],
+        'count': len(results),
+        'results': results
     })
 
 

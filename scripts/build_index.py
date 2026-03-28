@@ -133,6 +133,60 @@ def build_lda(df_clean):
         }, f)
     print("lda done")
 
+# build raw vocab, for spell check for user's query
+def build_vocab(df_clean):
+    print("\nBuilding spell check vocabulary...")
+    
+    df_raw = pd.read_parquet(config.RECIPES_RAW_PATH)
+    df_raw['Description'] = df_raw['Description'].fillna('')
+    df_raw['keywords_str'] = df_raw['Keywords'].apply(
+        lambda x: ' '.join([i for i in x if i is not None]) 
+        if isinstance(x, np.ndarray) else ''
+    )
+    df_raw['ingredients_str'] = df_raw['RecipeIngredientParts'].apply(
+        lambda x: ' '.join(x) if isinstance(x, np.ndarray) else ''
+    )
+    df_raw['instructions_str'] = df_raw['RecipeInstructions'].apply(
+        lambda x: ' '.join(x) if isinstance(x, np.ndarray) else ''
+    )
+
+    df_raw['raw_text'] = (
+        df_raw['Name'] + ' ' +
+        df_raw['Description'] + ' ' +
+        df_raw['ingredients_str'] + ' ' +
+        df_raw['instructions_str'] + ' ' +
+        df_raw['keywords_str']
+    )
+
+    def clean_only(text):   #stem not included here
+        text = re.sub(r'[^A-Za-z]', ' ', text)
+        text = re.sub(r'\s+', ' ', text).strip().lower()
+        return text
+    
+    print("Building raw vocabulary...")
+    raw_texts = df_raw['raw_text'].apply(clean_only).tolist()
+
+    vectorizer = CountVectorizer(
+        ngram_range=(1, 1),
+        min_df=3
+    )
+    vectorizer.fit(raw_texts)
+    matrix = vectorizer.transform(raw_texts)
+
+    word_freq = pd.Series(
+        np.asarray(matrix.sum(axis=0)).flatten(),
+        index=vectorizer.get_feature_names_out()
+    )
+    total = word_freq.sum()
+
+    print(f"Vocabulary size: {len(word_freq)} words")
+    print("Saving vocab.pkl...")
+    with open(config.VOCAB_PATH, 'wb') as f:
+        pickle.dump({
+            'word_freq': word_freq,
+            'total'    : total
+        }, f)
+    print("Done!")
 
 if __name__ == "__main__":
     print("Preprocess and build index..")
@@ -161,5 +215,11 @@ if __name__ == "__main__":
         print("\nlda_model.pkl already exists. skip :P")
     else:
         build_lda(df_clean)
+
+    # build vocab for spell check from query
+    if config.VOCAB_PATH.exists():
+        print("\nvocab.pkl already exists. skip xD")
+    else:
+        build_vocab(df_clean)
 
     print("\nFinished xD")
