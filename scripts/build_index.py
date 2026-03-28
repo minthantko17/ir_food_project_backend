@@ -16,6 +16,7 @@ from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
+from sklearn.metrics.pairwise import cosine_similarity
 from scipy import sparse
 
 import config
@@ -133,6 +134,52 @@ def build_lda(df_clean):
         }, f)
     print("lda done")
 
+# Fill Missing Images using TF-IDF
+def fill_missing_images(df_clean):
+    print("\nFilling missing images using TF-IDF similarity...")
+
+    has_image = df_clean[df_clean['image_url'].notna()].copy()
+    no_image  = df_clean[df_clean['image_url'].isna()].copy()
+
+    print(f"Recipes with image: {len(has_image)}")
+    print(f"Recipes without image: {len(no_image)}")
+
+    if len(no_image) == 0:
+        print("No missing images!")
+        return df_clean
+
+    print("  Building TF-IDF matrix...")
+    vectorizer = TfidfVectorizer(
+        max_features=10000,
+        ngram_range=(1, 1)
+    )
+    vectorizer.fit(df_clean['search_text_clean'].fillna(''))
+
+    X_has = vectorizer.transform(has_image['search_text_clean'].fillna(''))
+    X_no  = vectorizer.transform(no_image['search_text_clean'].fillna(''))
+
+    print("Computing similarities in chunks...")
+    chunk_size = 1000
+    image_urls = []
+
+    for i in range(0, len(no_image), chunk_size):
+        chunk = X_no[i:i + chunk_size]
+        sims = cosine_similarity(chunk, X_has)
+        best_idx = sims.argmax(axis=1)
+        urls = has_image.iloc[best_idx]['image_url'].values
+        image_urls.extend(urls)
+        print(f"{min(i + chunk_size, len(no_image))}/{len(no_image)}")
+
+    no_image = no_image.copy()
+
+    assert len(image_urls) == len(no_image), \
+        f"Mismatch! {len(image_urls)} urls vs {len(no_image)} recipes"
+    no_image['image_url'] = image_urls
+
+    df_filled = pd.concat([has_image, no_image]).sort_index()
+    print(f"  Done! Filled {len(no_image)} missing images")
+    return df_filled
+
 # build raw vocab, for spell check for user's query
 def build_vocab(df_clean):
     print("\nBuilding spell check vocabulary...")
@@ -203,6 +250,16 @@ if __name__ == "__main__":
         print("\n Saving recipes_clean.parquet...")
         df_clean.to_parquet(config.RECIPES_CLEAN_PATH, index=False)
         print("Saved!")
+
+    if config.RECIPES_CLEAN_PATH.exists():
+        missing = df_clean['image_url'].isna().sum()
+        if missing > 0:
+            df_clean = fill_missing_images(df_clean)
+            print("\n    Saving updated recipes_clean.parquet...")
+            df_clean.to_parquet(config.RECIPES_CLEAN_PATH, index=False)
+            print("    Saved!")
+        else:
+            print("\n No missing images, skipping...")
 
     # creat bm25 index
     if config.BM25_INDEX_PATH.exists():
