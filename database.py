@@ -2,7 +2,12 @@ import sqlite3
 import config
 
 def get_db():
-    conn = sqlite3.connect(config.DATABASE_PATH)
+    try:
+        from flask import current_app
+        db_path = current_app.config.get('DATABASE_PATH', config.DATABASE_PATH)
+    except RuntimeError:
+        db_path = config.DATABASE_PATH
+    conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row  # return rows as dicts
     return conn
 

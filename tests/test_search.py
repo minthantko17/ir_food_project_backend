@@ -22,7 +22,7 @@ class TestSearch:
 
     def test_search_with_typo(self, client, auth_headers):
         """Test spell correction works"""
-        res = client.get('/api/search?q=chiken', headers=auth_headers)
+        res = client.get('/api/search?q=recpie', headers=auth_headers)
         assert res.status_code == 200
         data = res.get_json()
         assert data['has_correction'] == True
