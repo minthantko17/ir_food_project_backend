@@ -4,7 +4,7 @@ import config
 from database import init_db
 from auth import register, login, login_required
 from search_engine import load_search_engine, search as bm25_search
-from spell_check import load_spell_checker, correct_query
+from spell_check import load_spell_checker, correct_query, preprocess_query
 from folders import (
     get_folders, create_folder,
     rename_folder, delete_folder
@@ -56,15 +56,25 @@ def login_route():
 @login_required
 def search_route():
     query = request.args.get('q', '').strip()
+    skip_correction = request.args.get('skip_correction', 'false').lower() == 'true'
+
     if not query:
         return jsonify({'error': 'Query is required'}), 400
 
-    # spellcheck raw query
+    if skip_correction:
+        search_query = preprocess_query(query)
+        results      = bm25_search(search_query)
+        return jsonify({
+            'original': query,
+            'corrected': query,
+            'has_correction': False,
+            'corrections': {},
+            'count': len(results),
+            'results': results
+        })
+
     spell_result = correct_query(query)
-
-    # search with stemmed corrected query
-    results = bm25_search(spell_result['search_query'])
-
+    results      = bm25_search(spell_result['search_query'])
     return jsonify({
         'original': spell_result['original'],
         'corrected': spell_result['corrected'],

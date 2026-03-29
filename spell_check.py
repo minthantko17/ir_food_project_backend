@@ -8,7 +8,7 @@ total = None
 vocabulary = None
 ps = PorterStemmer()
 
-#check with raw vocabs (not stemmed)
+#check with raw vocabs (not stemmed) and eng word
 def load_spell_checker():
     global word_freq, total, vocabulary
 
@@ -23,7 +23,7 @@ def load_spell_checker():
 
     word_freq = saved['word_freq']
     total = saved['total']
-    vocabulary = set(word_freq.index)
+    vocabulary = saved['vocabulary']
 
     print(f"  Vocabulary: {len(vocabulary)} words")
     return True
@@ -137,3 +137,14 @@ def correct_query(query):
         'corrections': corrections,
         'search_query': search_query  # stemmed
     }
+
+def preprocess_query(query):
+    """preprocess without spell checking"""
+    from nltk.corpus import stopwords
+    from nltk.tokenize import word_tokenize
+    stop_words = set(stopwords.words('english'))
+    
+    tokens = word_tokenize(query.lower())
+    tokens = [w for w in tokens if w not in stop_words and len(w) > 2]
+    tokens = [ps.stem(w) for w in tokens]
+    return ' '.join(tokens)

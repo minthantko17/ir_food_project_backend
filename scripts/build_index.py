@@ -183,8 +183,9 @@ def fill_missing_images(df_clean):
 # build raw vocab, for spell check for user's query
 def build_vocab(df_clean):
     print("\nBuilding spell check vocabulary...")
-    
+
     df_raw = pd.read_parquet(config.RECIPES_RAW_PATH)
+
     df_raw['Description'] = df_raw['Description'].fillna('')
     df_raw['keywords_str'] = df_raw['Keywords'].apply(
         lambda x: ' '.join([i for i in x if i is not None]) 
@@ -196,7 +197,6 @@ def build_vocab(df_clean):
     df_raw['instructions_str'] = df_raw['RecipeInstructions'].apply(
         lambda x: ' '.join(x) if isinstance(x, np.ndarray) else ''
     )
-
     df_raw['raw_text'] = (
         df_raw['Name'] + ' ' +
         df_raw['Description'] + ' ' +
@@ -209,29 +209,46 @@ def build_vocab(df_clean):
         text = re.sub(r'[^A-Za-z]', ' ', text)
         text = re.sub(r'\s+', ' ', text).strip().lower()
         return text
-    
-    print("Building raw vocabulary...")
-    raw_texts = df_raw['raw_text'].apply(clean_only).tolist()
 
-    vectorizer = CountVectorizer(
-        ngram_range=(1, 1),
-        min_df=3
-    )
+    print("  Building recipe vocabulary (min_df=20)...")
+    raw_texts = df_raw['raw_text'].apply(clean_only).tolist()
+    vectorizer = CountVectorizer(ngram_range=(1, 1), min_df=20)
     vectorizer.fit(raw_texts)
     matrix = vectorizer.transform(raw_texts)
-
     word_freq = pd.Series(
         np.asarray(matrix.sum(axis=0)).flatten(),
         index=vectorizer.get_feature_names_out()
     )
     total = word_freq.sum()
+    recipe_vocab = set(word_freq.index)
+    print(f"  Recipe vocabulary: {len(recipe_vocab)} words")
 
-    print(f"Vocabulary size: {len(word_freq)} words")
+    # add English dictionary
+    print("  Loading English dictionary...")
+    import nltk
+    nltk.download('words', quiet=True)
+    from nltk.corpus import words as nltk_words
+    english_vocab = set(w.lower() for w in nltk_words.words())
+    print(f"English dictionary: {len(english_vocab)} words")
+
+    # combine all vocab
+    combined_vocab = recipe_vocab | english_vocab
+    print(f"  Combined vocabulary: {len(combined_vocab)} words")
+
+    # assign frequency 1 for English-only words
+    english_only = english_vocab - recipe_vocab
+    english_series = pd.Series(
+        1,
+        index=list(english_only)
+    )
+    word_freq = pd.concat([word_freq, english_series])
+
     print("Saving vocab.pkl...")
     with open(config.VOCAB_PATH, 'wb') as f:
         pickle.dump({
-            'word_freq': word_freq,
-            'total'    : total
+            'word_freq' : word_freq,
+            'total' : total,
+            'vocabulary': combined_vocab
         }, f)
     print("Done!")
 
