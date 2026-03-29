@@ -8,7 +8,7 @@ total = None
 vocabulary = None
 ps = PorterStemmer()
 
-#check with raw vocabs (not stemmed)
+#check with raw vocabs (not stemmed) and eng word
 def load_spell_checker():
     global word_freq, total, vocabulary
 
@@ -23,7 +23,7 @@ def load_spell_checker():
 
     word_freq = saved['word_freq']
     total = saved['total']
-    vocabulary = set(word_freq.index)
+    vocabulary = saved['vocabulary']
 
     print(f"  Vocabulary: {len(vocabulary)} words")
     return True
