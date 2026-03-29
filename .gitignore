@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+
+# Large data files (share via Google Drive)
+resource/recipes.parquet
+resource/reviews.parquet
+resource/bm25_index.pkl
+resource/lda_model.pkl
+resource/recipes_clean.parquet
+resource/vocab.pkl
+
+# Images downloaded at runtime
+resource/images/
+
+# SQLite database (each person has their own)
+*.db
+
+# Pytest
+.pytest_cache/
+.coverage
+
+# Logs
+*.log
