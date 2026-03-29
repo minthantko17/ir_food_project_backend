@@ -137,3 +137,14 @@ def correct_query(query):
         'corrections': corrections,
         'search_query': search_query  # stemmed
     }
+
+def preprocess_query(query):
+    """preprocess without spell checking"""
+    from nltk.corpus import stopwords
+    from nltk.tokenize import word_tokenize
+    stop_words = set(stopwords.words('english'))
+    
+    tokens = word_tokenize(query.lower())
+    tokens = [w for w in tokens if w not in stop_words and len(w) > 2]
+    tokens = [ps.stem(w) for w in tokens]
+    return ' '.join(tokens)
